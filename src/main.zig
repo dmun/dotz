@@ -45,8 +45,18 @@ fn fmt(allocator: Allocator, str: []const u8, config: Config) []const u8 {
     }) catch str;
 }
 
-fn getDotfilesDir() !Dir {
-    return try std.fs.openDirAbsolute("/Users/david/.dotfiles", .{});
+const Error = error{
+    NoHomeDirFound,
+};
+
+fn getDotfilesDir(allocator: Allocator) !Dir {
+    var envMap = try std.process.getEnvMap(allocator);
+    defer envMap.deinit();
+
+    const home = envMap.get("HOME") orelse return error.NoHomeDirFound;
+
+    const path = try std.fmt.allocPrint(allocator, "{s}/.dotfiles", .{home});
+    return try std.fs.openDirAbsolute(path, .{});
 }
 
 pub fn main() !void {
@@ -54,7 +64,8 @@ pub fn main() !void {
     defer arena.deinit();
     const allocator = arena.allocator();
 
-    const dir = try getDotfilesDir();
+    const dir = try getDotfilesDir(allocator);
+
     var iter = dir.iterate();
     const writer = std.io.getStdOut().writer();
     while (try iter.next()) |entry| {
