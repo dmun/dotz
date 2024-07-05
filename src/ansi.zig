@@ -28,11 +28,11 @@ const Config = struct {
     attr: Attribute = .normal,
 };
 
-pub fn fmt(allocator: Allocator, str: []const u8, config: Config) []const u8 {
-    return std.fmt.allocPrint(allocator, "\u{001b}[{d};{d};{d}m{s}\u{001b}[0m", .{
+pub fn fmt(allocator: Allocator, str: []const u8, config: Config) ![]u8 {
+    return try std.fmt.allocPrint(allocator, "\u{001b}[{d};{d};{d}m{s}\u{001b}[0m", .{
         @intFromEnum(config.attr),
         @intFromEnum(config.fg),
         @intFromEnum(config.bg) + 10,
         str,
-    }) catch str;
+    });
 }
